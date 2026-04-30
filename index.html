@@ -121,8 +121,14 @@ function convertUrl() {
 
 function copyToClipboard() {
   const url = document.getElementById('resultUrl').textContent;
-  navigator.clipboard.writeText(url);
-  alert("Copied the url: " + url);
+  navigator.clipboard.writeText(url).then(() => {
+    const button = event.target;
+    const originalText = button.textContent;
+    button.textContent = 'Copied!';
+    setTimeout(() => {
+      button.textContent = originalText;
+    }, 2000);
+  });
 }
 
 document.getElementById('youtubeInput').addEventListener('keypress', function(e) {
