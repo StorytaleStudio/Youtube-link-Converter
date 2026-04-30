@@ -79,18 +79,45 @@
 </a>
 </body>
 <script>
-function extractVideoId(url) {
-  let videoId;
-  
-  if (url.includes('youtube.com/watch')) {
-    videoId = url.match(/v=([a-zA-Z0-9_-]{11})/)?.[1];
-  } else if (url.includes('youtu.be/')) {
-    videoId = url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/)?.[1];
-  } else if (url.includes('youtube.com/embed')) {
-    videoId = url.match(/embed\/([a-zA-Z0-9_-]{11})/)?.[1];
+function extractVideoId(input) {
+  if (/^[a-zA-Z0-9_-]{11}$/.test(input)) {
+  return input;
+}
+  try {
+    const url = new URL(input.trim());
+
+    // Standard youtube domains
+    const host = url.hostname.replace('www.', '');
+
+    // 1. youtube.com/watch?v=VIDEO_ID
+    if (host === 'youtube.com' || host === 'm.youtube.com') {
+      const v = url.searchParams.get('v');
+      if (v && v.length === 11) return v;
+
+      // 2. youtube.com/embed/VIDEO_ID
+      if (url.pathname.startsWith('/embed/')) {
+        return url.pathname.split('/embed/')[1].split(/[?/&]/)[0];
+      }
+
+      // 3. youtube.com/shorts/VIDEO_ID
+      if (url.pathname.startsWith('/shorts/')) {
+        return url.pathname.split('/shorts/')[1].split(/[?/&]/)[0];
+      }
+    }
+
+    // 4. youtu.be/VIDEO_ID
+    if (host === 'youtu.be') {
+      return url.pathname.slice(1).split(/[?/&]/)[0];
+    }
+
+    const isValid = /^[a-zA-Z0-9_-]{11}$/.test(videoId);
+    return isValid ? videoId : null;
+
+    return null;
+  } catch (e) {
+    // If it's not a valid URL at all
+    return null;
   }
-  
-  return videoId;
 }
 
 function convertUrl() {
