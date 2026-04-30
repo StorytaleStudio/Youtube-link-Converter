@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<head>
+  <title>Youtube Link Converter</title>
+  <style>
+    :root{
+      font-size: 1rem;
+      --color-background-primary: #3a3a3a;
+      --color-background-secondary: rgba(250,250,250,0.4);
+      --color-border-tertiary: rgba(0,0,0,0.5);
+      --color-text-primary: #fafafa;
+      --color-text-secondary: rgba(250,250,250,0.4);
+      --color-text-info: rgba(0,250,0,0.5);
+      --color-text-danger: tomato;
+      --border-radius-lg: 0.5rem;
+      --border-radius-md: 0.25rem;
+      
+      
+    }
+    html{
+      background: black;
+      font-family: sans-serif;
+    }
+    body{
+      min-width: 90svw;
+      min-height: 90svh;
+      display: flex;
+      place-items: center;
+
+    }
+
+    .logo-link{
+      position: absolute;
+      bottom: 2rem;
+      right: 2rem;
+      width: 4rem;
+      height: 4rem;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div style="background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); padding: 1.5rem; display: flex; flex-direction: column; margin: auto; min-width: 50%; max-width: 50rem;">
+    <h2 style="font-size: 18px; font-weight: 500; margin: 0 0 1.5rem; color: var(--color-text-primary); text-align: center;">YouTube URL Converter</h2>
+    
+    <div style="margin-bottom: 1.5rem; display: flex; flex-direction: column; place-items: center;">
+      <label for="youtubeInput" style="display: block; font-size: 13px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 6px;">Paste your YouTube URL</label>
+      <input type="text" id="youtubeInput" placeholder="https://www.youtube.com/watch?v=..." style="width: 100%; padding: 10px 12px; font-size: 14px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); font-family: var(--font-mono);" />
+    </div>
+    
+    <button onclick="convertUrl()" style="width: max-content; padding: 10px; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); font-size: 14px; font-weight: 500; color: var(--color-text-primary); cursor: pointer; transition: background 0.2s; margin: auto;">Convert to Embed URL</button>
+    
+    <div id="resultContainer" style="margin-top: 1.5rem; display: none;">
+      <div style="background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 1rem; margin-bottom: 1rem; border-left: 4px solid var(--color-border-info);">
+        <p style="font-size: 12px; color: var(--color-text-secondary); margin: 0 0 6px;">Embed URL with rel=0</p>
+        <code id="resultUrl" style="display: block; font-family: var(--font-mono); font-size: 12px; color: var(--color-text-primary); word-break: break-all; line-height: 1.4; margin-bottom: 8px;"></code>
+        <button onclick="copyToClipboard()" style="font-size: 12px; padding: 6px 12px; background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: 4px; color: var(--color-text-primary); cursor: pointer; transition: background 0.2s;">Copy</button>
+      </div>
+      
+      <div style="background: var(--color-background-info); border-radius: var(--border-radius-md); padding: 1rem; border: 0.5px solid var(--color-border-info);">
+        <p style="font-size: 13px; color: var(--color-text-info); margin: 0; font-weight: 500;">✓ Ready to use</p>
+        <p style="font-size: 12px; color: var(--color-text-info); margin: 4px 0 0; opacity: 0.9;">This URL will embed the video with related videos disabled</p>
+      </div>
+    </div>
+    
+    <div id="errorContainer" style="margin-top: 1.5rem; display: none;">
+      <div style="background: var(--color-background-danger); border-radius: var(--border-radius-md); padding: 1rem; border: 0.5px solid var(--color-border-danger);">
+        <p style="font-size: 13px; color: var(--color-text-danger); margin: 0; font-weight: 500;">⚠ Invalid URL</p>
+        <p style="font-size: 12px; color: var(--color-text-danger); margin: 4px 0 0; opacity: 0.9;" id="errorMessage">Please paste a valid YouTube URL</p>
+      </div>
+    </div>
+  </div>
+  <a class="logo-link" href="https://storytale.studio" alt="Storytale Studio" target="_blank">
+  <svg class="logo-svg"xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 184 184" fill="none">
+    <path d="M32.6056 115H0V151.394V184H32.6056H69V151.394H32.6056V115Z" fill="currentColor"/>
+    <path d="M151.394 151.394H115V184H151.394H184V151.394V115H151.394V151.394Z" fill="currentColor"/>
+    <path d="M115 0V32.5534H151.394V69H184V32.5534V0.110444V0H115Z" fill="currentColor"/>
+  </svg>
+</a>
+</body>
+<script>
+function extractVideoId(url) {
+  let videoId;
+  
+  if (url.includes('youtube.com/watch')) {
+    videoId = url.match(/v=([a-zA-Z0-9_-]{11})/)?.[1];
+  } else if (url.includes('youtu.be/')) {
+    videoId = url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/)?.[1];
+  } else if (url.includes('youtube.com/embed')) {
+    videoId = url.match(/embed\/([a-zA-Z0-9_-]{11})/)?.[1];
+  }
+  
+  return videoId;
+}
+
+function convertUrl() {
+  const input = document.getElementById('youtubeInput').value.trim();
+  const resultContainer = document.getElementById('resultContainer');
+  const errorContainer = document.getElementById('errorContainer');
+  
+  if (!input) {
+    errorContainer.style.display = 'block';
+    document.getElementById('errorMessage').textContent = 'Please enter a URL';
+    resultContainer.style.display = 'none';
+    return;
+  }
+  
+  const videoId = extractVideoId(input);
+  
+  if (!videoId) {
+    errorContainer.style.display = 'block';
+    document.getElementById('errorMessage').textContent = 'No valid YouTube video ID found. Make sure you\'re using a watch, youtu.be, or embed URL.';
+    resultContainer.style.display = 'none';
+    return;
+  }
+  
+  const embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0`;
+  document.getElementById('resultUrl').textContent = embedUrl;
+  resultContainer.style.display = 'block';
+  errorContainer.style.display = 'none';
+}
+
+function copyToClipboard() {
+  const url = document.getElementById('resultUrl').textContent;
+  navigator.clipboard.writeText(url);
+  alert("Copied the url: " + url);
+}
+
+document.getElementById('youtubeInput').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    convertUrl();
+  }
+});
+</script>
+
+</html>
